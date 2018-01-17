@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         version="2.5"
+         xmlns="http://java.sun.com/xml/ns/javaee"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
+    <servlet>
+        <servlet-name>hello</servlet-name>
+        <servlet-class>com.mizo0203.lilywhite.HelloServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>hello</servlet-name>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>
+    <servlet>
+        <servlet-name>line_hook</servlet-name>
+        <servlet-class>com.mizo0203.lilywhite.LilyWhiteLineBotServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>line_hook</servlet-name>
+        <url-pattern>/line_hook</url-pattern>
+    </servlet-mapping>
+
+    <!-- [START Push Task] -->
+    <!-- https://cloud.google.com/appengine/docs/standard/java/taskqueue/push/ -->
+    <servlet>
+        <servlet-name>reminder_task</servlet-name>
+        <servlet-class>com.mizo0203.lilywhite.push_task.ReminderTaskServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>reminder_task</servlet-name>
+        <url-pattern>/push_task/reminder_task</url-pattern>
+    </servlet-mapping>
+
+    <!-- https://cloud.google.com/appengine/docs/standard/java/config/cron#securing_urls_for_cron -->
+    <security-constraint>
+        <web-resource-collection>
+            <web-resource-name>push_task</web-resource-name>
+            <url-pattern>/push_task/*</url-pattern>
+        </web-resource-collection>
+        <auth-constraint>
+            <role-name>admin</role-name>
+        </auth-constraint>
+    </security-constraint>
+    <!-- [END Push Task] -->
+
+    <filter>
+        <filter-name>ObjectifyFilter</filter-name>
+        <filter-class>com.googlecode.objectify.ObjectifyFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>ObjectifyFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+    <listener>
+        <listener-class>com.mizo0203.lilywhite.repo.objectify.OfyHelper</listener-class>
+    </listener>
+</web-app>
