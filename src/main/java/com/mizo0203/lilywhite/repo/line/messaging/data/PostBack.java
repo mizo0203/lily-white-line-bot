@@ -1,6 +1,6 @@
 package com.mizo0203.lilywhite.repo.line.messaging.data;
 
-import com.mizo0203.lilywhite.repo.Define;
+import com.mizo0203.lilywhite.domain.Define;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

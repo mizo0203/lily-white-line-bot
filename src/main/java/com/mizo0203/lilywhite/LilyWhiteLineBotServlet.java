@@ -1,5 +1,6 @@
 package com.mizo0203.lilywhite;
 
+import com.mizo0203.lilywhite.domain.UseCase;
 import com.mizo0203.lilywhite.repo.State;
 import com.mizo0203.lilywhite.repo.line.messaging.data.webHook.event.*;
 

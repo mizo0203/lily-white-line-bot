@@ -1,6 +1,5 @@
-package com.mizo0203.lilywhite;
+package com.mizo0203.lilywhite.domain;
 
-import com.mizo0203.lilywhite.repo.Define;
 import com.mizo0203.lilywhite.repo.Repository;
 import com.mizo0203.lilywhite.repo.State;
 import com.mizo0203.lilywhite.repo.line.messaging.data.MessageObject;
@@ -14,21 +13,18 @@ import com.mizo0203.lilywhite.repo.line.messaging.data.template.Template;
 import com.mizo0203.lilywhite.repo.line.messaging.data.webHook.event.RequestBody;
 
 import javax.servlet.http.HttpServletRequest;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class UseCase {
   public static final String ACTION_DATA_REQUEST_REMINDER_DATE_SET =
       "ACTION_DATA_REQUEST_REMINDER_DATE_SET";
   public static final String ACTION_DATA_REQUEST_RESET = "ACTION_DATA_REQUEST_RESET";
-  private final DateFormat mDateFormat;
   private final Repository mRepository;
+  private final Translator mTranslator;
 
   public UseCase() {
     mRepository = new Repository();
-    mDateFormat = new SimpleDateFormat(Define.DATE_FORMAT_PATTERN);
-    mDateFormat.setTimeZone(Define.LINE_TIME_ZONE);
+    mTranslator = new Translator();
   }
 
   public void destroy() {
@@ -110,7 +106,7 @@ public class UseCase {
     mRepository.replyMessage(
         replyToken,
         new MessageObject[] {
-          new TextMessageObject("リマインダーをセットしましたよー\n" + mDateFormat.format(date)),
+          new TextMessageObject("リマインダーをセットしましたよー\n" + mTranslator.formatDate(date)),
         });
   }
 

@@ -15,7 +15,7 @@
 
 package com.mizo0203.lilywhite.push_task;
 
-import com.mizo0203.lilywhite.UseCase;
+import com.mizo0203.lilywhite.domain.UseCase;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
