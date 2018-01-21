@@ -49,6 +49,20 @@ Copyright 2015 Google Inc.
             <artifactId>commons-codec</artifactId>
             <version>1.11</version>
         </dependency>
+
+        <!-- [START Java SDK for Messaging API BOT] -->
+        <dependency>
+            <groupId>com.linecorp.bot</groupId>
+            <artifactId>line-bot-model</artifactId>
+            <version>1.14.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.linecorp.bot</groupId>
+            <artifactId>line-bot-api-client</artifactId>
+            <version>1.14.0</version>
+        </dependency>
+        <!-- [END Java SDK for Messaging API BOT] -->
+
     </dependencies>
     <build>
         <!-- for hot reload of the web application -->

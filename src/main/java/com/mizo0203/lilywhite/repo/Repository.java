@@ -1,11 +1,14 @@
 package com.mizo0203.lilywhite.repo;
 
+import com.linecorp.bot.model.ReplyMessage;
+import com.linecorp.bot.model.message.Message;
 import com.mizo0203.lilywhite.repo.line.messaging.data.MessageObject;
 import com.mizo0203.lilywhite.repo.line.messaging.data.webHook.event.RequestBody;
 import com.mizo0203.lilywhite.repo.objectify.entity.KeyEntity;
 import com.mizo0203.lilywhite.repo.objectify.entity.LineTalkRoomConfig;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
 import java.util.logging.Logger;
 
 public class Repository {
@@ -17,7 +20,8 @@ public class Repository {
 
   public Repository() {
     mOfyRepository = new OfyRepository();
-    mLineRepository = new LineRepository();
+    // FIXME: getChannelAccessToken() をクラスメソッドに変更
+    mLineRepository = new LineRepository(getChannelAccessToken());
     mPushQueueRepository = new PushQueueRepository();
   }
 
@@ -103,9 +107,8 @@ public class Repository {
    * @param replyToken Webhook で受信する応答トークン
    * @param messages 送信するメッセージ (最大件数：5)
    */
-  public void replyMessage(String replyToken, MessageObject[] messages) {
-    String channelAccessToken = getChannelAccessToken();
-    mLineRepository.replyMessage(channelAccessToken, replyToken, messages);
+  public void replyMessage(String replyToken, Message... messages) {
+    mLineRepository.replyMessage(new ReplyMessage(replyToken, Arrays.asList(messages)));
   }
 
   /**

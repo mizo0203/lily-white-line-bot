@@ -1,8 +1,11 @@
 package com.mizo0203.lilywhite.repo;
 
+import com.linecorp.bot.client.LineMessagingClient;
+import com.linecorp.bot.client.LineMessagingClientBuilder;
+import com.linecorp.bot.model.ReplyMessage;
+import com.linecorp.bot.model.response.BotApiResponse;
 import com.mizo0203.lilywhite.repo.line.messaging.data.MessageObject;
 import com.mizo0203.lilywhite.repo.line.messaging.data.PushMessageData;
-import com.mizo0203.lilywhite.repo.line.messaging.data.ReplyMessageData;
 import com.mizo0203.lilywhite.repo.line.messaging.data.webHook.event.RequestBody;
 import com.mizo0203.lilywhite.util.HttpUtil;
 import com.mizo0203.lilywhite.util.PaserUtil;
@@ -18,6 +21,8 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -25,12 +30,16 @@ import java.util.logging.Logger;
 
   private static final Logger LOG = Logger.getLogger(LineRepository.class.getName());
 
-  private static final String MESSAGING_API_REPLY_MESSAGE_URL_STR =
-      "https://api.line.me/v2/bot/message/reply";
   private static final String MESSAGING_API_PUSH_MESSAGE_URL_STR =
       "https://api.line.me/v2/bot/message/push";
   private static final String MESSAGING_API_IDS_MEMBERS_GROUP_URL_STR =
       "https://api.line.me/v2/bot/group/%s/members/ids";
+
+  private final LineMessagingClient mLineMessagingClient;
+
+  LineRepository(String channelAccessToken) {
+    mLineMessagingClient = new LineMessagingClientBuilder(channelAccessToken).build();
+  }
 
   @SuppressWarnings("EmptyMethod")
   public void destroy() {
@@ -48,24 +57,19 @@ import java.util.logging.Logger;
    *
    * <p>https://developers.line.me/ja/docs/messaging-api/reference/#anchor-36ddabf319927434df30f0a74e21ad2cc69f0013
    *
-   * @param channelAccessToken channel access token
-   * @param replyToken Webhook で受信する応答トークン
-   * @param messages 送信するメッセージ (最大件数：5)
+   * @param replyMessage ReplyMessage
    */
-  public void replyMessage(final String channelAccessToken, final String replyToken, final MessageObject[] messages) {
-    final ReplyMessageData replyMessageData = new ReplyMessageData();
-    replyMessageData.replyToken = replyToken;
-    replyMessageData.messages = messages;
-    final String body = PaserUtil.toJson(replyMessageData);
+  public void replyMessage(ReplyMessage replyMessage) {
     try {
-      final URL url = new URL(MESSAGING_API_REPLY_MESSAGE_URL_STR);
-      final Map<String, String> reqProp = new HashMap<>();
-      reqProp.put("Content-Type", "application/json");
-      reqProp.put("Authorization", "Bearer " + channelAccessToken);
-      HttpUtil.post(url, reqProp, body, null);
-    } catch (final IOException e) {
-      e.printStackTrace();
+      BotApiResponse resp = mLineMessagingClient.replyMessage(replyMessage).get();
+      dumpBotApiResponse(resp);
+    } catch (InterruptedException | ExecutionException e) {
+      LOG.log(Level.SEVERE, "replyMessage", e);
     }
+  }
+
+  private void dumpBotApiResponse(BotApiResponse resp) {
+    LOG.info(resp.toString());
   }
 
   /**
@@ -82,7 +86,8 @@ import java.util.logging.Logger;
    *     IDは使用しないでください。
    * @param messages 送信するメッセージ 最大件数：5
    */
-  public void pushMessage(final String channelAccessToken, final String to, final MessageObject[] messages) {
+  public void pushMessage(
+      final String channelAccessToken, final String to, final MessageObject[] messages) {
     final PushMessageData pushMessageData = new PushMessageData(to, messages);
     final String body = PaserUtil.toJson(pushMessageData);
     try {
@@ -153,7 +158,7 @@ import java.util.logging.Logger;
    * @param expectSignature X-Line-Signature request header string
    */
   private boolean verifySignature(
-          final String channelSecret, final String httpRequestBody, final String expectSignature) {
+      final String channelSecret, final String httpRequestBody, final String expectSignature) {
     try {
       final SecretKeySpec key = new SecretKeySpec(channelSecret.getBytes(), "HmacSHA256");
       final Mac mac = Mac.getInstance("HmacSHA256");
