@@ -3,8 +3,8 @@ package com.mizo0203.lilywhite.util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import com.linecorp.bot.model.PushMessage;
 import com.linecorp.bot.model.ReplyMessage;
-import com.mizo0203.lilywhite.repo.line.messaging.data.PushMessageData;
 import com.mizo0203.lilywhite.repo.line.messaging.data.webHook.event.RequestBody;
 
 import java.io.BufferedReader;
@@ -25,9 +25,9 @@ public class PaserUtil {
     return new ObjectMapper().writeValueAsString(data);
   }
 
-  /** @see Gson#fromJson(String, Class) */
-  public static String toJson(PushMessageData data) {
-    return new Gson().toJson(data, PushMessageData.class);
+  /** @see ObjectMapper#writeValueAsString(Object) */
+  public static String toJson(PushMessage data) throws JsonProcessingException {
+    return new ObjectMapper().writeValueAsString(data);
   }
 
   private static String parseString(BufferedReader br) throws IOException {

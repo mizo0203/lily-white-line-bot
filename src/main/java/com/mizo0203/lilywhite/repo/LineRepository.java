@@ -1,9 +1,8 @@
 package com.mizo0203.lilywhite.repo;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.linecorp.bot.model.PushMessage;
 import com.linecorp.bot.model.ReplyMessage;
-import com.mizo0203.lilywhite.repo.line.messaging.data.MessageObject;
-import com.mizo0203.lilywhite.repo.line.messaging.data.PushMessageData;
 import com.mizo0203.lilywhite.repo.line.messaging.data.webHook.event.RequestBody;
 import com.mizo0203.lilywhite.util.HttpUtil;
 import com.mizo0203.lilywhite.util.PaserUtil;
@@ -81,22 +80,17 @@ import java.util.logging.Logger;
    *
    * <p>https://developers.line.me/ja/docs/messaging-api/reference/#anchor-0c00cb0f42b970892f7c3382f92620dca5a110fc
    *
-   * @param channelAccessToken channel access token
-   * @param to 送信先のID。Webhookイベントオブジェクトで返される、userId、groupId、またはroomIdの値を使用します。LINEアプリに表示されるLINE
-   *     IDは使用しないでください。
-   * @param messages 送信するメッセージ 最大件数：5
+   * @param pushMessage PushMessage
    */
-  public void pushMessage(
-      final String channelAccessToken, final String to, final MessageObject[] messages) {
-    final PushMessageData pushMessageData = new PushMessageData(to, messages);
-    final String body = PaserUtil.toJson(pushMessageData);
+  public void pushMessage(PushMessage pushMessage) {
     try {
       final URL url = new URL(MESSAGING_API_PUSH_MESSAGE_URL_STR);
       final Map<String, String> reqProp = new HashMap<>();
       reqProp.put("Content-Type", "application/json");
-      reqProp.put("Authorization", "Bearer " + channelAccessToken);
+      reqProp.put("Authorization", "Bearer " + mChannelAccessToken);
+      final String body = PaserUtil.toJson(pushMessage);
       HttpUtil.post(url, reqProp, body, null);
-    } catch (final IOException e) {
+    } catch (MalformedURLException | JsonProcessingException e) {
       e.printStackTrace();
     }
   }

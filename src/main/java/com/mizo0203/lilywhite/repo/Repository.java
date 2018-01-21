@@ -1,8 +1,8 @@
 package com.mizo0203.lilywhite.repo;
 
+import com.linecorp.bot.model.PushMessage;
 import com.linecorp.bot.model.ReplyMessage;
 import com.linecorp.bot.model.message.Message;
-import com.mizo0203.lilywhite.repo.line.messaging.data.MessageObject;
 import com.mizo0203.lilywhite.repo.line.messaging.data.webHook.event.RequestBody;
 import com.mizo0203.lilywhite.repo.objectify.entity.KeyEntity;
 import com.mizo0203.lilywhite.repo.objectify.entity.LineTalkRoomConfig;
@@ -122,9 +122,8 @@ public class Repository {
    *     IDは使用しないでください。
    * @param messages 送信するメッセージ 最大件数：5
    */
-  public void pushMessage(String to, MessageObject[] messages) {
-    String channelAccessToken = getChannelAccessToken();
-    mLineRepository.pushMessage(channelAccessToken, to, messages);
+  public void pushMessage(String to, Message... messages) {
+    mLineRepository.pushMessage(new PushMessage(to, Arrays.asList(messages)));
   }
 
   /**

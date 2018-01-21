@@ -9,4 +9,25 @@ public class Define {
   public static final String DATE_FORMAT_PATTERN = "M/d(E) H:mm";
 
   public static final String DATE_JST = "(JST)";
+
+  public enum Mode {
+    DATE,
+    TIME,
+    DATE_TIME,
+    ;
+
+    @Override
+    public String toString() {
+      switch (this) {
+        case DATE:
+          return "date";
+        case TIME:
+          return "time";
+        case DATE_TIME:
+          return "datetime";
+        default:
+          throw new IllegalStateException(super.toString());
+      }
+    }
+  }
 }

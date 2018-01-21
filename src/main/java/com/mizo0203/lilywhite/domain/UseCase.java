@@ -1,22 +1,19 @@
 package com.mizo0203.lilywhite.domain;
 
+import com.linecorp.bot.model.action.Action;
+import com.linecorp.bot.model.action.DatetimePickerAction;
+import com.linecorp.bot.model.action.PostbackAction;
 import com.linecorp.bot.model.message.Message;
 import com.linecorp.bot.model.message.TemplateMessage;
 import com.linecorp.bot.model.message.TextMessage;
+import com.linecorp.bot.model.message.template.ButtonsTemplate;
+import com.linecorp.bot.model.message.template.Template;
 import com.mizo0203.lilywhite.repo.Repository;
 import com.mizo0203.lilywhite.repo.State;
-import com.mizo0203.lilywhite.repo.line.messaging.data.MessageObject;
-import com.mizo0203.lilywhite.repo.line.messaging.data.TemplateMessageObject;
-import com.mizo0203.lilywhite.repo.line.messaging.data.TextMessageObject;
-import com.mizo0203.lilywhite.repo.line.messaging.data.action.Action;
-import com.mizo0203.lilywhite.repo.line.messaging.data.action.DateTimePickerAction;
-import com.mizo0203.lilywhite.repo.line.messaging.data.action.PostBackAction;
-import com.mizo0203.lilywhite.repo.line.messaging.data.template.ButtonTemplate;
-import com.mizo0203.lilywhite.repo.line.messaging.data.template.Template;
 import com.mizo0203.lilywhite.repo.line.messaging.data.webHook.event.RequestBody;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -42,25 +39,21 @@ public class UseCase {
 
   /** リマインダーメッセージを送信する */
   public void pushReminderMessage(String source_id, String message) {
-    mRepository.pushMessage(
-        source_id,
-        new MessageObject[] {
-          new TextMessageObject(message), createTemplateMessageObjectToReset(),
-        });
+    mRepository.pushMessage(source_id, new TextMessage(message), createTemplateMessageToReset());
   }
 
-  private MessageObject createTemplateMessageObjectToReset() {
-    Template template =
-        new ButtonTemplate(
-            "リマインダーをリセットしますよー",
-            new Action[] {
-              createPostBackActionToRequestReset(),
-            });
-    return new TemplateMessageObject("テンプレートメッセージはiOS版およびAndroid版のLINE 6.7.0以降で対応しています。", template);
+  private Message createTemplateMessageToReset() {
+    return new TemplateMessage(
+        "テンプレートメッセージはiOS版およびAndroid版のLINE 6.7.0以降で対応しています。", createTemplateToReset());
   }
 
-  private Action createPostBackActionToRequestReset() {
-    return new PostBackAction(ACTION_DATA_REQUEST_RESET).label("リセット");
+  private Template createTemplateToReset() {
+    return new ButtonsTemplate(
+        null, null, "リマインダーをリセットしますよー", createPostBackActionsToRequestReset());
+  }
+
+  private List<Action> createPostBackActionsToRequestReset() {
+    return Collections.singletonList(new PostbackAction("リセット", ACTION_DATA_REQUEST_RESET));
   }
 
   public void replyMessageToRequestReminderMessage(String replyToken) {
@@ -86,15 +79,13 @@ public class UseCase {
         .build();
   }
 
-  private List<com.linecorp.bot.model.action.Action>
-      createDateTimePickerActionsToRequestReminderDate() {
-    return Arrays.asList(
-        new com.linecorp.bot.model.action.DatetimePickerAction[] {
-          new com.linecorp.bot.model.action.DatetimePickerAction(
-              "セット",
-              ACTION_DATA_REQUEST_REMINDER_DATE_SET,
-              DateTimePickerAction.Mode.DATE_TIME.toString()),
-        });
+  private List<Action> createDateTimePickerActionsToRequestReminderDate() {
+    return Collections.singletonList(createDateTimePickerActionToRequestReminderDate());
+  }
+
+  private Action createDateTimePickerActionToRequestReminderDate() {
+    return new DatetimePickerAction(
+        "セット", ACTION_DATA_REQUEST_REMINDER_DATE_SET, Define.Mode.DATE_TIME.toString());
   }
 
   public void enqueueReminderTask(String source_id, Date date) {
