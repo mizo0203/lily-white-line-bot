@@ -45,19 +45,20 @@ public class Repository {
   }
 
   public void clearEvent(String sourceId) {
-    mOfyRepository.deleteLineTalkRoomConfig(sourceId);
     LineTalkRoomConfig config = getOrCreateLineTalkRoomConfig(sourceId);
-    if (config == null) {
-      return;
-    }
-    mOfyRepository.saveLineTalkRoomConfig(config);
+    deleteReminderTask(config);
+    mOfyRepository.deleteLineTalkRoomConfig(sourceId);
+  }
+
+  private void deleteReminderTask(LineTalkRoomConfig config) {
+    mPushQueueRepository.deleteReminderTask(config.getReminderEnqueuedTaskName());
+    config.setReminderEnqueuedTaskName(null);
   }
 
   private LineTalkRoomConfig getOrCreateLineTalkRoomConfig(String sourceId) {
     LineTalkRoomConfig config = mOfyRepository.loadLineTalkRoomConfig(sourceId);
     if (config == null) {
       config = new LineTalkRoomConfig(sourceId);
-      mOfyRepository.saveLineTalkRoomConfig(config);
     }
     return config;
   }
@@ -143,9 +144,11 @@ public class Repository {
 
   public void enqueueReminderTask(String sourceId, long etaMillis) {
     LineTalkRoomConfig config = getOrCreateLineTalkRoomConfig(sourceId);
-    mPushQueueRepository.enqueueReminderTask(
-        config.getSourceId(), etaMillis, config.getReminderMessage());
-    config.setReminderEnqueued();
+    String taskName =
+        mPushQueueRepository.enqueueReminderTask(
+            config.getSourceId(), etaMillis, config.getReminderMessage());
+    LOG.info("enqueueReminderTask taskName: " + taskName);
+    config.setReminderEnqueuedTaskName(taskName);
     mOfyRepository.saveLineTalkRoomConfig(config);
   }
 }

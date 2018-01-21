@@ -20,13 +20,12 @@ public class LineTalkRoomConfig {
 
   @Id private String sourceId;
   private String reminderMessage;
-
-  private boolean reminderEnqueued;
+  private String reminderEnqueuedTaskName;
 
   public LineTalkRoomConfig() {
     // LineTalkRoomConfig must have a no-arg constructor
     reminderMessage = null;
-    reminderEnqueued = false;
+    reminderEnqueuedTaskName = null;
   }
 
   /** A convenience constructor */
@@ -48,10 +47,14 @@ public class LineTalkRoomConfig {
   }
 
   public boolean isReminderEnqueued() {
-    return reminderEnqueued;
+    return reminderEnqueuedTaskName != null;
   }
 
-  public void setReminderEnqueued() {
-    reminderEnqueued = true;
+  public String getReminderEnqueuedTaskName() {
+    return reminderEnqueuedTaskName;
+  }
+
+  public void setReminderEnqueuedTaskName(String taskName) {
+    reminderEnqueuedTaskName = taskName;
   }
 }
