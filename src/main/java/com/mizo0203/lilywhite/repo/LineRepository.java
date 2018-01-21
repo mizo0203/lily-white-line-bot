@@ -1,9 +1,7 @@
 package com.mizo0203.lilywhite.repo;
 
-import com.linecorp.bot.client.LineMessagingClient;
-import com.linecorp.bot.client.LineMessagingClientBuilder;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.linecorp.bot.model.ReplyMessage;
-import com.linecorp.bot.model.response.BotApiResponse;
 import com.mizo0203.lilywhite.repo.line.messaging.data.MessageObject;
 import com.mizo0203.lilywhite.repo.line.messaging.data.PushMessageData;
 import com.mizo0203.lilywhite.repo.line.messaging.data.webHook.event.RequestBody;
@@ -16,29 +14,31 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/** 注意: com.linecorp.bot:line-bot-api-client は Java App Engine アプリケーションで使用できない */
 /* package */ class LineRepository {
 
   private static final Logger LOG = Logger.getLogger(LineRepository.class.getName());
 
+  private static final String MESSAGING_API_REPLY_MESSAGE_URL_STR =
+      "https://api.line.me/v2/bot/message/reply";
   private static final String MESSAGING_API_PUSH_MESSAGE_URL_STR =
       "https://api.line.me/v2/bot/message/push";
   private static final String MESSAGING_API_IDS_MEMBERS_GROUP_URL_STR =
       "https://api.line.me/v2/bot/group/%s/members/ids";
 
-  private final LineMessagingClient mLineMessagingClient;
+  private String mChannelAccessToken;
 
   LineRepository(String channelAccessToken) {
-    mLineMessagingClient = new LineMessagingClientBuilder(channelAccessToken).build();
+    mChannelAccessToken = channelAccessToken;
   }
 
   @SuppressWarnings("EmptyMethod")
@@ -61,15 +61,15 @@ import java.util.logging.Logger;
    */
   public void replyMessage(ReplyMessage replyMessage) {
     try {
-      BotApiResponse resp = mLineMessagingClient.replyMessage(replyMessage).get();
-      dumpBotApiResponse(resp);
-    } catch (InterruptedException | ExecutionException e) {
-      LOG.log(Level.SEVERE, "replyMessage", e);
+      final URL url = new URL(MESSAGING_API_REPLY_MESSAGE_URL_STR);
+      final Map<String, String> reqProp = new HashMap<>();
+      reqProp.put("Content-Type", "application/json");
+      reqProp.put("Authorization", "Bearer " + mChannelAccessToken);
+      final String body = PaserUtil.toJson(replyMessage);
+      HttpUtil.post(url, reqProp, body, null);
+    } catch (JsonProcessingException | MalformedURLException e) {
+      e.printStackTrace();
     }
-  }
-
-  private void dumpBotApiResponse(BotApiResponse resp) {
-    LOG.info(resp.toString());
   }
 
   /**
