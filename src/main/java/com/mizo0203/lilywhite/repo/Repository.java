@@ -55,7 +55,11 @@ public class Repository {
   }
 
   private void deleteReminderTask(LineTalkRoomConfig config) {
-    mPushQueueRepository.deleteReminderTask(config.getReminderEnqueuedTaskName());
+    String taskName = config.getReminderEnqueuedTaskName();
+    if (taskName == null || taskName.isEmpty()) {
+      return;
+    }
+    mPushQueueRepository.deleteReminderTask(taskName);
     config.setReminderEnqueuedTaskName(null);
   }
 

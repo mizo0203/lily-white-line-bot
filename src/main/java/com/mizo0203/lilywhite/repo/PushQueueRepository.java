@@ -5,6 +5,7 @@ import com.google.appengine.api.taskqueue.QueueFactory;
 import com.google.appengine.api.taskqueue.TaskOptions;
 import com.mizo0203.lilywhite.push_task.ReminderTaskServlet;
 
+import javax.annotation.Nonnull;
 import java.util.logging.Logger;
 
 /* package */ class PushQueueRepository {
@@ -43,7 +44,7 @@ import java.util.logging.Logger;
         .getName();
   }
 
-  public void deleteReminderTask(String taskName) {
+  public void deleteReminderTask(@Nonnull String taskName) {
     // Delete an individual task...
     mQueue.deleteTask(taskName);
   }

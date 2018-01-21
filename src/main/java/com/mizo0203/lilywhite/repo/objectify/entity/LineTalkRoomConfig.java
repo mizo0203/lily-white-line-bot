@@ -4,6 +4,8 @@ import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 import com.mizo0203.lilywhite.repo.objectify.OfyHelper;
 
+import javax.annotation.Nullable;
+
 /**
  * The @Entity tells Objectify about our entity. We also register it in {@link OfyHelper} Our
  * primary key @Id is set automatically by the Google Datastore for us.
@@ -50,6 +52,7 @@ public class LineTalkRoomConfig {
     return reminderEnqueuedTaskName != null;
   }
 
+  @Nullable
   public String getReminderEnqueuedTaskName() {
     return reminderEnqueuedTaskName;
   }
