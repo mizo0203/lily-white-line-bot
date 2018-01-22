@@ -1,23 +1,22 @@
 package com.mizo0203.lilywhite.repo;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.linecorp.bot.client.LineSignatureValidator;
 import com.linecorp.bot.model.PushMessage;
 import com.linecorp.bot.model.ReplyMessage;
-import com.mizo0203.lilywhite.repo.line.messaging.data.webHook.event.RequestBody;
+import com.linecorp.bot.model.event.Event;
+import com.linecorp.bot.servlet.LineBotCallbackException;
+import com.linecorp.bot.servlet.LineBotCallbackRequestParser;
 import com.mizo0203.lilywhite.util.HttpUtil;
 import com.mizo0203.lilywhite.util.PaserUtil;
-import org.apache.commons.codec.binary.Base64;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
+import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -33,10 +32,13 @@ import java.util.logging.Logger;
       "https://api.line.me/v2/bot/message/push";
   private static final String MESSAGING_API_IDS_MEMBERS_GROUP_URL_STR =
       "https://api.line.me/v2/bot/group/%s/members/ids";
+  private final LineBotCallbackRequestParser mLineBotCallbackRequestParser;
 
   private String mChannelAccessToken;
 
-  LineRepository(String channelAccessToken) {
+  LineRepository(String channelSecret, String channelAccessToken) {
+    mLineBotCallbackRequestParser =
+        new LineBotCallbackRequestParser(new LineSignatureValidator(channelSecret.getBytes()));
     mChannelAccessToken = channelAccessToken;
   }
 
@@ -120,52 +122,13 @@ import java.util.logging.Logger;
     }
   }
 
-  /**
-   * リクエストボディを取得する
-   *
-   * @param req an {@link HttpServletRequest} object that contains the request the client has made
-   *     of the servlet
-   * @return リクエストボディは、webhookイベントオブジェクトの配列を含むJSONオブジェクトです。
-   */
-  public RequestBody getRequestBody(final String channelSecret, final HttpServletRequest req) {
+  @Nullable
+  public List<Event> getCallbackEventList(HttpServletRequest req) {
     try {
-      LOG.info("req: " + req.toString());
-      LOG.info("getHeaderNames: " + req.getHeaderNames());
-      LOG.info("getParameterMap: " + req.getParameterMap());
-      final String httpRequestBody = req.getReader().readLine();
-      LOG.info("httpRequestBody: " + httpRequestBody);
-      final String expectSignature = req.getHeader("X-Line-Signature");
-      if (verifySignature(channelSecret, httpRequestBody, expectSignature)) {
-        return PaserUtil.parseWebhooksData(httpRequestBody);
-      }
-    } catch (final IOException e) {
+      return mLineBotCallbackRequestParser.handle(req).getEvents();
+    } catch (LineBotCallbackException | IOException e) {
       LOG.log(Level.SEVERE, "", e);
+      return null;
     }
-    return null;
-  }
-
-  /**
-   * 署名を検証する
-   *
-   * @param channelSecret Channel secret string
-   * @param httpRequestBody Request body string
-   * @param expectSignature X-Line-Signature request header string
-   */
-  private boolean verifySignature(
-      final String channelSecret, final String httpRequestBody, final String expectSignature) {
-    try {
-      final SecretKeySpec key = new SecretKeySpec(channelSecret.getBytes(), "HmacSHA256");
-      final Mac mac = Mac.getInstance("HmacSHA256");
-      mac.init(key);
-      final byte[] source = httpRequestBody.getBytes("UTF-8");
-      final String actualSignature = Base64.encodeBase64String(mac.doFinal(source));
-      // Compare X-Line-Signature request header string and the signature
-      if (actualSignature.equals(expectSignature)) {
-        return true;
-      }
-    } catch (NoSuchAlgorithmException | InvalidKeyException | UnsupportedEncodingException e) {
-      LOG.log(Level.SEVERE, "", e);
-    }
-    return false;
   }
 }

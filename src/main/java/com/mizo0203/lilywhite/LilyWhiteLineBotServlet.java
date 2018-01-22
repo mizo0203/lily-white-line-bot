@@ -1,8 +1,11 @@
 package com.mizo0203.lilywhite;
 
+import com.linecorp.bot.model.event.JoinEvent;
+import com.linecorp.bot.model.event.MessageEvent;
+import com.linecorp.bot.model.event.PostbackEvent;
+import com.linecorp.bot.model.event.message.TextMessageContent;
 import com.mizo0203.lilywhite.domain.UseCase;
 import com.mizo0203.lilywhite.repo.State;
-import com.mizo0203.lilywhite.repo.line.messaging.data.webHook.event.*;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -37,19 +40,8 @@ public class LilyWhiteLineBotServlet extends HttpServlet {
   private void onLineWebhook(HttpServletRequest req, HttpServletResponse resp) {
     mUseCase = new UseCase();
     try {
-      RequestBody requestBody = mUseCase.getRequestBody(req);
-      if (requestBody == null) {
-        return;
-      }
-      for (WebHookEventObject event : requestBody.concreteWebHookEventObject()) {
-        if (event instanceof JoinEvent) {
-          onLineJoin((JoinEvent) event);
-        } else if (event instanceof MessageEvent) {
-          onLineMessage((MessageEvent) event);
-        } else if (event instanceof PostBackEvent) {
-          onLinePostBack((PostBackEvent) event);
-        }
-      }
+      mUseCase.parseWebhookEvent(
+          req, this::onLineMessage, null, null, this::onLineJoin, null, this::onLinePostBack, null);
     } finally {
       // ボットアプリのサーバーに webhook から送信される HTTP POST リクエストには、ステータスコード 200 を返す必要があります。
       // https://developers.line.me/ja/docs/messaging-api/reference/#anchor-99cdae5b4b38ad4b86a137b508fd7b1b861e2366
@@ -58,23 +50,35 @@ public class LilyWhiteLineBotServlet extends HttpServlet {
     }
   }
 
+  private void onLineMessage(MessageEvent event) {
+    mUseCase.parseMessageEvent(
+        event.getMessage(),
+        message -> onLineTextMessage(event, message),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null);
+  }
+
   private void onLineJoin(JoinEvent event) {
     LOG.info("replyToken: " + event.getReplyToken());
-    mUseCase.initSource(event.getSource().getSourceId());
+    mUseCase.initSource(event.getSource().getSenderId());
     mUseCase.replyMessageToRequestReminderMessage(event.getReplyToken());
   }
 
-  private void onLineMessage(MessageEvent event) {
-    LOG.info("text: " + event.getMessage().text);
-    if (event.getMessage().text == null) {
+  private void onLineTextMessage(MessageEvent event, TextMessageContent message) {
+    LOG.info("text: " + message.getText());
+    if (message.getText() == null) {
       return;
     }
-    State state = mUseCase.getState(event.getSource().getSourceId());
+    State state = mUseCase.getState(event.getSource().getSenderId());
     switch (state) {
       case NO_REMINDER_MESSAGE:
         {
-          String reminderMessage = event.getMessage().text.split("\n")[0];
-          mUseCase.setReminderMessage(event.getSource().getSourceId(), reminderMessage);
+          String reminderMessage = message.getText().split("\n")[0];
+          mUseCase.setReminderMessage(event.getSource().getSenderId(), reminderMessage);
           mUseCase.replyMessageToRequestReminderDate(event.getReplyToken());
           break;
         }
@@ -90,42 +94,75 @@ public class LilyWhiteLineBotServlet extends HttpServlet {
     }
   }
 
-  private void onLinePostBack(PostBackEvent event) {
-    State state = mUseCase.getState(event.getSource().getSourceId());
+  private void onLinePostBack(PostbackEvent event) {
+    mUseCase.parseLinePostbackEvent(
+        event.getPostbackContent().getParams(),
+        param -> onLinePostBackNoParam(event),
+        param -> onLinePostBackDateParam(event, param));
+  }
+
+  private void onLinePostBackNoParam(PostbackEvent event) {
+    State state = mUseCase.getState(event.getSource().getSenderId());
     switch (state) {
       case NO_REMINDER_MESSAGE:
         {
-          if (UseCase.ACTION_DATA_REQUEST_RESET.equals(event.getPostBackData())) {
+          if (UseCase.ACTION_DATA_REQUEST_RESET.equals(event.getPostbackContent().getData())) {
             mUseCase.replyMessageToRequestReminderMessage(event.getReplyToken());
           }
           break;
         }
       case HAS_REMINDER_MESSAGE:
         {
-          if (UseCase.ACTION_DATA_REQUEST_REMINDER_DATE_SET.equals(event.getPostBackData())) {
-            Date date = event.getPostBackParams().parseDatetime();
-            mUseCase.enqueueReminderTask(event.getSource().getSourceId(), date);
-            mUseCase.replyReminderConfirmMessage(event.getReplyToken(), date);
-          }
+          // NOP
           break;
         }
       case REMINDER_ENQUEUED:
         {
-          if (UseCase.ACTION_DATA_REQUEST_REMINDER_CANCELLATION.equals(event.getPostBackData())) {
-            mUseCase.setCancellationConfirm(event.getSource().getSourceId(), true);
+          if (UseCase.ACTION_DATA_REQUEST_REMINDER_CANCELLATION.equals(
+              event.getPostbackContent().getData())) {
+            mUseCase.setCancellationConfirm(event.getSource().getSenderId(), true);
             mUseCase.replyReminderCancellationConfirmMessage(event.getReplyToken());
           }
           break;
         }
       case REMINDER_CANCELLATION_CONFIRM:
         {
-          if (UseCase.ACTION_DATA_CANCEL_REMINDER.equals(event.getPostBackData())) {
+          if (UseCase.ACTION_DATA_CANCEL_REMINDER.equals(event.getPostbackContent().getData())) {
             mUseCase.replyCanceledReminderMessage(event.getReplyToken());
-            mUseCase.initSource(event.getSource().getSourceId());
-          } else if (UseCase.ACTION_DATA_NOT_CANCEL_REMINDER.equals(event.getPostBackData())) {
-            mUseCase.setCancellationConfirm(event.getSource().getSourceId(), false);
+            mUseCase.initSource(event.getSource().getSenderId());
+          } else if (UseCase.ACTION_DATA_NOT_CANCEL_REMINDER.equals(
+              event.getPostbackContent().getData())) {
+            mUseCase.setCancellationConfirm(event.getSource().getSenderId(), false);
             mUseCase.replyNotCanceledReminderMessage(event.getReplyToken());
           }
+          break;
+        }
+      default:
+        break;
+    }
+  }
+
+  private void onLinePostBackDateParam(PostbackEvent event, Date date) {
+    State state = mUseCase.getState(event.getSource().getSenderId());
+    switch (state) {
+      case NO_REMINDER_MESSAGE:
+        {
+          // NOP
+          break;
+        }
+      case HAS_REMINDER_MESSAGE:
+        {
+          if (UseCase.ACTION_DATA_REQUEST_REMINDER_DATE_SET.equals(
+              event.getPostbackContent().getData())) {
+            mUseCase.enqueueReminderTask(event.getSource().getSenderId(), date);
+            mUseCase.replyReminderConfirmMessage(event.getReplyToken(), date);
+          }
+          break;
+        }
+      case REMINDER_ENQUEUED:
+      case REMINDER_CANCELLATION_CONFIRM:
+        {
+          // NOP
           break;
         }
       default:

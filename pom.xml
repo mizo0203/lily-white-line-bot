@@ -34,11 +34,6 @@ Copyright 2015 Google Inc.
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>2.6.1</version>
-        </dependency>
-        <dependency>
             <groupId>com.googlecode.objectify</groupId>
             <artifactId>objectify</artifactId>
             <version>5.1.10</version>
@@ -54,6 +49,11 @@ Copyright 2015 Google Inc.
         <dependency>
             <groupId>com.linecorp.bot</groupId>
             <artifactId>line-bot-model</artifactId>
+            <version>1.14.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.linecorp.bot</groupId>
+            <artifactId>line-bot-servlet</artifactId>
             <version>1.14.0</version>
         </dependency>
         <!-- [END Java SDK for Messaging API BOT] -->

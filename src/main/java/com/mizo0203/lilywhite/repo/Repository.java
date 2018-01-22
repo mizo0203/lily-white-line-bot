@@ -2,13 +2,15 @@ package com.mizo0203.lilywhite.repo;
 
 import com.linecorp.bot.model.PushMessage;
 import com.linecorp.bot.model.ReplyMessage;
+import com.linecorp.bot.model.event.Event;
 import com.linecorp.bot.model.message.Message;
-import com.mizo0203.lilywhite.repo.line.messaging.data.webHook.event.RequestBody;
 import com.mizo0203.lilywhite.repo.objectify.entity.KeyEntity;
 import com.mizo0203.lilywhite.repo.objectify.entity.LineTalkRoomConfig;
 
+import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Logger;
 
 public class Repository {
@@ -20,8 +22,8 @@ public class Repository {
 
   public Repository() {
     mOfyRepository = new OfyRepository();
-    // FIXME: getChannelAccessToken() をクラスメソッドに変更
-    mLineRepository = new LineRepository(getChannelAccessToken());
+    // FIXME: getChannelSecret(), getChannelAccessToken() をクラスメソッドに変更
+    mLineRepository = new LineRepository(getChannelSecret(), getChannelAccessToken());
     mPushQueueRepository = new PushQueueRepository();
   }
 
@@ -139,15 +141,9 @@ public class Repository {
     mLineRepository.idsMembersGroup(channelAccessToken, groupId);
   }
 
-  /**
-   * リクエストボディを取得する
-   *
-   * @param req an {@link HttpServletRequest} object that contains the request the client has made
-   *     of the servlet
-   * @return リクエストボディは、webhookイベントオブジェクトの配列を含むJSONオブジェクトです。
-   */
-  public RequestBody getRequestBody(HttpServletRequest req) {
-    return mLineRepository.getRequestBody(getChannelSecret(), req);
+  @Nullable
+  public List<Event> getCallbackEventList(HttpServletRequest req) {
+    return mLineRepository.getCallbackEventList(req);
   }
 
   public void enqueueReminderTask(String sourceId, long etaMillis) {

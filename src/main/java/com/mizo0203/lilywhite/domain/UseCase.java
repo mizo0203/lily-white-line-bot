@@ -3,21 +3,19 @@ package com.mizo0203.lilywhite.domain;
 import com.linecorp.bot.model.action.Action;
 import com.linecorp.bot.model.action.DatetimePickerAction;
 import com.linecorp.bot.model.action.PostbackAction;
+import com.linecorp.bot.model.event.*;
+import com.linecorp.bot.model.event.message.*;
 import com.linecorp.bot.model.message.Message;
 import com.linecorp.bot.model.message.TemplateMessage;
 import com.linecorp.bot.model.message.TextMessage;
 import com.linecorp.bot.model.message.template.ButtonsTemplate;
 import com.linecorp.bot.model.message.template.ConfirmTemplate;
 import com.linecorp.bot.model.message.template.Template;
-import com.mizo0203.lilywhite.repo.Repository;
-import com.mizo0203.lilywhite.repo.State;
-import com.mizo0203.lilywhite.repo.line.messaging.data.webHook.event.RequestBody;
+import com.mizo0203.lilywhite.repo.*;
 
+import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 public class UseCase {
   public static final String ACTION_DATA_REQUEST_REMINDER_DATE_SET =
@@ -172,7 +170,117 @@ public class UseCase {
     mRepository.setCancellationConfirm(sourceId, cancellationConfirm);
   }
 
-  public RequestBody getRequestBody(HttpServletRequest req) {
-    return mRepository.getRequestBody(req);
+  public void parseWebhookEvent(
+      HttpServletRequest req,
+      @Nullable WebhookEvent<MessageEvent> onMessageEvent,
+      @Nullable WebhookEvent<UnfollowEvent> onUnfollowEvent,
+      @Nullable WebhookEvent<FollowEvent> onFollowEvent,
+      @Nullable WebhookEvent<JoinEvent> onJoinEvent,
+      @Nullable WebhookEvent<LeaveEvent> onLeaveEvent,
+      @Nullable WebhookEvent<PostbackEvent> onPostbackEvent,
+      @Nullable WebhookEvent<BeaconEvent> onBeaconEvent) {
+    List<Event> eventList = getCallbackEventList(req);
+    if (eventList == null) {
+      return;
+    }
+    for (Event event : eventList) {
+      if (event instanceof MessageEvent) {
+        if (onMessageEvent != null) {
+          onMessageEvent.callback((MessageEvent) event);
+        }
+      } else if (event instanceof UnfollowEvent) {
+        if (onUnfollowEvent != null) {
+          onUnfollowEvent.callback((UnfollowEvent) event);
+        }
+      } else if (event instanceof FollowEvent) {
+        if (onFollowEvent != null) {
+          onFollowEvent.callback((FollowEvent) event);
+        }
+      } else if (event instanceof JoinEvent) {
+        if (onJoinEvent != null) {
+          onJoinEvent.callback((JoinEvent) event);
+        }
+      } else if (event instanceof LeaveEvent) {
+        if (onLeaveEvent != null) {
+          onLeaveEvent.callback((LeaveEvent) event);
+        }
+      } else if (event instanceof PostbackEvent) {
+        if (onPostbackEvent != null) {
+          onPostbackEvent.callback((PostbackEvent) event);
+        }
+      } else if (event instanceof BeaconEvent) {
+        if (onBeaconEvent != null) {
+          onBeaconEvent.callback((BeaconEvent) event);
+        }
+      }
+    }
+  }
+
+  @Nullable
+  private List<Event> getCallbackEventList(HttpServletRequest req) {
+    return mRepository.getCallbackEventList(req);
+  }
+
+  public void parseMessageEvent(
+      MessageContent message,
+      @Nullable WebhookMessageEvent<TextMessageContent> onTextMessageEvent,
+      @Nullable WebhookMessageEvent<ImageMessageContent> onImageMessageEvent,
+      @Nullable WebhookMessageEvent<LocationMessageContent> onLocationMessageEvent,
+      @Nullable WebhookMessageEvent<AudioMessageContent> onAudioMessageEvent,
+      @Nullable WebhookMessageEvent<VideoMessageContent> onVideoMessageEvent,
+      @Nullable WebhookMessageEvent<StickerMessageContent> onStickerMessageEvent,
+      @Nullable WebhookMessageEvent<FileMessageContent> onFileMessageEvent) {
+    if (message instanceof TextMessageContent) {
+      if (onTextMessageEvent != null) {
+        onTextMessageEvent.callback((TextMessageContent) message);
+      }
+    } else if (message instanceof ImageMessageContent) {
+      if (onImageMessageEvent != null) {
+        onImageMessageEvent.callback((ImageMessageContent) message);
+      }
+    } else if (message instanceof LocationMessageContent) {
+      if (onLocationMessageEvent != null) {
+        onLocationMessageEvent.callback((LocationMessageContent) message);
+      }
+    } else if (message instanceof AudioMessageContent) {
+      if (onAudioMessageEvent != null) {
+        onAudioMessageEvent.callback((AudioMessageContent) message);
+      }
+    } else if (message instanceof VideoMessageContent) {
+      if (onVideoMessageEvent != null) {
+        onVideoMessageEvent.callback((VideoMessageContent) message);
+      }
+    } else if (message instanceof StickerMessageContent) {
+      if (onStickerMessageEvent != null) {
+        onStickerMessageEvent.callback((StickerMessageContent) message);
+      }
+    } else if (message instanceof FileMessageContent) {
+      if (onFileMessageEvent != null) {
+        onFileMessageEvent.callback((FileMessageContent) message);
+      }
+    }
+  }
+
+  public void parseLinePostbackEvent(
+      @Nullable Map<String, String> params,
+      @Nullable WebhookPostbackEvent<Void> onLinePostBackNone,
+      @Nullable WebhookPostbackEvent<Date> onLinePostBackDate) {
+    if (params == null || params.isEmpty()) {
+      if (onLinePostBackNone != null) {
+        onLinePostBackNone.callback(null);
+      }
+    } else if (params.containsKey("date")) {
+      if (onLinePostBackDate != null) {
+        onLinePostBackDate.callback(mTranslator.parseDate(params.get("date")));
+      }
+    } else if (params.containsKey("time")) {
+      if (onLinePostBackDate != null) {
+        onLinePostBackDate.callback(mTranslator.parseTime(params.get("time")));
+      }
+    } else if (params.containsKey("datetime")) {
+      if (onLinePostBackDate != null) {
+        onLinePostBackDate.callback(mTranslator.parseDatetime(params.get("datetime")));
+      }
+    }
   }
 }
