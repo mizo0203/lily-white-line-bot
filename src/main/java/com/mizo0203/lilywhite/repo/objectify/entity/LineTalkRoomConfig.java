@@ -23,11 +23,13 @@ public class LineTalkRoomConfig {
   @Id private String sourceId;
   private String reminderMessage;
   private String reminderEnqueuedTaskName;
+  private boolean cancellationConfirm;
 
   public LineTalkRoomConfig() {
     // LineTalkRoomConfig must have a no-arg constructor
     reminderMessage = null;
     reminderEnqueuedTaskName = null;
+    cancellationConfirm = false;
   }
 
   /** A convenience constructor */
@@ -59,5 +61,13 @@ public class LineTalkRoomConfig {
 
   public void setReminderEnqueuedTaskName(String taskName) {
     reminderEnqueuedTaskName = taskName;
+  }
+
+  public boolean isCancellationConfirm() {
+    return cancellationConfirm;
+  }
+
+  public void setCancellationConfirm(boolean cancellationConfirm) {
+    this.cancellationConfirm = cancellationConfirm;
   }
 }

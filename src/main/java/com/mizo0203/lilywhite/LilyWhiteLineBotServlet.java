@@ -80,6 +80,7 @@ public class LilyWhiteLineBotServlet extends HttpServlet {
         }
       case HAS_REMINDER_MESSAGE:
       case REMINDER_ENQUEUED:
+      case REMINDER_CANCELLATION_CONFIRM:
         {
           // NOP
           break;
@@ -110,7 +111,21 @@ public class LilyWhiteLineBotServlet extends HttpServlet {
         }
       case REMINDER_ENQUEUED:
         {
-          // NOP
+          if (UseCase.ACTION_DATA_REQUEST_REMINDER_CANCELLATION.equals(event.getPostBackData())) {
+            mUseCase.setCancellationConfirm(event.getSource().getSourceId(), true);
+            mUseCase.replyReminderCancellationConfirmMessage(event.getReplyToken());
+          }
+          break;
+        }
+      case REMINDER_CANCELLATION_CONFIRM:
+        {
+          if (UseCase.ACTION_DATA_CANCEL_REMINDER.equals(event.getPostBackData())) {
+            mUseCase.replyCanceledReminderMessage(event.getReplyToken());
+            mUseCase.initSource(event.getSource().getSourceId());
+          } else if (UseCase.ACTION_DATA_NOT_CANCEL_REMINDER.equals(event.getPostBackData())) {
+            mUseCase.setCancellationConfirm(event.getSource().getSourceId(), false);
+            mUseCase.replyNotCanceledReminderMessage(event.getReplyToken());
+          }
           break;
         }
       default:

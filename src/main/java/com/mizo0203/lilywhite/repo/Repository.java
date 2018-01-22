@@ -33,7 +33,9 @@ public class Repository {
 
   public State getState(String sourceId) {
     LineTalkRoomConfig config = getOrCreateLineTalkRoomConfig(sourceId);
-    if (config.isReminderEnqueued()) {
+    if (config.isCancellationConfirm()) {
+      return State.REMINDER_CANCELLATION_CONFIRM;
+    } else if (config.isReminderEnqueued()) {
       return State.REMINDER_ENQUEUED;
     } else if (config.getReminderMessage() != null) {
       return State.HAS_REMINDER_MESSAGE;
@@ -155,6 +157,12 @@ public class Repository {
             config.getSourceId(), etaMillis, config.getReminderMessage());
     LOG.info("enqueueReminderTask taskName: " + taskName);
     config.setReminderEnqueuedTaskName(taskName);
+    mOfyRepository.saveLineTalkRoomConfig(config);
+  }
+
+  public void setCancellationConfirm(String sourceId, boolean cancellationConfirm) {
+    LineTalkRoomConfig config = getOrCreateLineTalkRoomConfig(sourceId);
+    config.setCancellationConfirm(cancellationConfirm);
     mOfyRepository.saveLineTalkRoomConfig(config);
   }
 }
