@@ -62,7 +62,7 @@ public class UseCase {
 
   public void replyMessageToRequestReminderMessage(String replyToken) {
     mRepository.replyMessage(
-        replyToken, new TextMessage("リマインダーをセットしますよー\nメッセージを返信してくださーい\n例) 春ですよー"));
+        replyToken, new TextMessage("リマインダーをセットしますよー\nメッセージを入力してくださいー\n例) 春ですよー"));
   }
 
   public void replyMessageToRequestReminderDate(String replyToken) {
@@ -106,7 +106,7 @@ public class UseCase {
   public void replyReminderConfirmMessage(String replyToken, Date date) {
     mRepository.replyMessage(
         replyToken,
-        createMessageToConfirmReminder("リマインダーをセットしましたよー\n" + mTranslator.formatDate(date)));
+        createMessageToConfirmReminder("リマインダーをセットしましたー\n" + mTranslator.formatDate(date)));
   }
 
   private Message createMessageToConfirmReminder(String text) {
